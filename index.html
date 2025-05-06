@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header><img src="./perodua-logo-cropped.JPG" alt=""></header>
+        <div class="wrapper">
+            <div class="top-wrapper">
+                <div class="bulb">
+                    <div class="greenBulb"></div>
+                    <div class="yellowBulb"></div>
+                    <div class="redBulb"></div>
+                </div>
+            
+
+                <div class="dashboardStat">
+                    <div class="dashboardBox">
+                        <p class="dashboardDate">23 April 2025</p>
+                        <h3 class="typePLC">PLC 3</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="middle-wrapper">
+                <div class="goodPart">
+                    <p class="goodTitle">good part</p>
+                    <h3 class="goodNum"></h3>
+                </div>
+                <div class="NGPart">
+                    <p class="NG-Title">NG part</p>
+                    <h3 class="NG-Num"></h3>
+                </div>
+                <div class="statDate">
+                    <div class="statDate-wrapper">
+                        <div class="start-line">
+                            <p class="start">Started:</p>
+                            <p class="start">Last stop:</p>
+                            <p class="start">Last NG:</p>
+                            
+                        </div>
+                        <div class="stop-line">
+                            <h3 class="startDate"></h3>
+                            <h3 class="startDate"></h3>
+                            <h3 class="startDate"></h3>
+                        </div>
+                    </div>
+                    
+                </div>
+            </div>
+        </div>
+    <footer><p>Copyright 2025 @ DDE</p></footer>
+    <div class="shadow"></div> <!--create "breathing affect"-->
+    
+   
+</body>
+<script>
+   
+   let dataArray = []; // Declare an empty array
+
+        // Create a WebSocket connection
+        const socket = new WebSocket('ws://localhost:5002'); // Adjust this URL if needed
+
+        socket.onopen = () => {
+            console.log('Connected to WebSocket server');
+        };
+
+        socket.onmessage = (event) => {
+            // This is called when data is received via WebSocket
+            const data = JSON.parse(event.data);
+            console.log('Received from WebSocket:', data);
+
+            // Store the data in the array and update the dashboard
+            dataArray = data;
+            updateDashboard(dataArray);
+        };
+
+        socket.onerror = (error) => {
+            console.error('WebSocket Error:', error);
+        };
+
+        socket.onclose = () => {
+            console.log('Disconnected from WebSocket server');
+        };
+
+        // Function to update the dashboard with data
+        function updateDashboard(dataArray) {
+            const bulbColor = dataArray[0].bulb.toLowerCase();
+            const typePLC = dataArray[0].id;
+            const okNum = dataArray[0].countOK;
+            const badNum = dataArray[0].countNG;
+            const startDate = dataArray[0].dateLastStop;
+            const lastStopDate = dataArray[0].dateStartRun;
+            const lastNGDate = dataArray[0].dateNG_detected;
+
+            // Getting class into variables
+            const shadow = document.querySelector('.shadow');
+            const greenBulb = document.querySelector('.greenBulb');
+            const yellowBulb = document.querySelector('.yellowBulb');
+            const redBulb = document.querySelector('.redBulb');
+
+            const dateDashboard = document.querySelector('.dashboardDate');
+            const plc = document.querySelector('.typePLC');
+
+            const goodCounter = document.querySelector('.goodNum');
+            const badCounter = document.querySelector('.NG-Num');
+
+            const started = document.querySelectorAll('.startDate')[0];
+            const lastStop = document.querySelectorAll('.startDate')[1];
+            const lastNG = document.querySelectorAll('.startDate')[2];
+
+            // Effect on class starts here ------------------------------->
+
+            const formattedDate = new Date().toLocaleDateString('en-GB', {
+                day: '2-digit',
+                month: 'long',
+                year: 'numeric'
+            });
+
+
+            dateDashboard.textContent = formattedDate;
+            plc.textContent = typePLC;
+            goodCounter.textContent = okNum;
+            badCounter.textContent = badNum;
+            started.textContent = startDate;
+            lastStop.textContent = lastStopDate;
+            lastNG.textContent = lastNGDate;
+
+            // Bulb color change only one bulb for an instance
+            if (bulbColor === 'green') {
+                greenBulb.style.backgroundColor = 'green';
+                yellowBulb.style.backgroundColor = 'white';
+                redBulb.style.backgroundColor = 'white';
+
+                yellowBulb.style.border = '1px solid grey';
+                redBulb.style.border = '1px solid grey';
+                greenBulb.style.border = 'none';
+
+                shadow.style.display = 'none';
+            }
+            else if (bulbColor === 'yellow') {
+                yellowBulb.style.backgroundColor = 'rgb(240, 220, 0)';
+                greenBulb.style.backgroundColor = 'white';
+                redBulb.style.backgroundColor = 'white';
+
+                greenBulb.style.border = '1px solid grey';
+                redBulb.style.border = '1px solid grey';
+                yellowBulb.style.border = 'none';
+
+                shadow.style.boxShadow = 'inset 0 0 100000px rgba(255, 225, 0, 0.899)';
+                shadow.style.display = 'block';
+            }
+            else if (bulbColor === 'red') {
+                redBulb.style.backgroundColor = 'red';
+                greenBulb.style.backgroundColor = 'white';
+                yellowBulb.style.backgroundColor = 'white';
+
+                greenBulb.style.border = '1px solid grey';
+                yellowBulb.style.border = '1px solid grey';
+                redBulb.style.border = 'none';
+
+                shadow.style.display = 'block';
+                shadow.style.boxShadow = 'inset 0 0 100000px red';
+                shadow.style.display = 'block';
+            }
+        }
+
+        // Fetch initial data
+        fetch('http://[2001:d08:2291:3f2d:36af:c8e1:acca:cdec]:5002/api/data')
+            .then(response => response.json())
+            .then(data => {
+                // Store the data in the array and update the dashboard
+                dataArray = data;
+                updateDashboard(dataArray);
+            })
+            .catch(error => {
+                console.error('Error fetching data:', error);
+            });
+   
+  
+   /*legacy script*/
+
+    /*
+    let dataArray = []; // Declare an empty array
+
+    fetch('http://[2001:d08:2291:3f2d:36af:c8e1:acca:cdec]:5002/api/data')
+        .then(response => response.json())
+        .then(data => {
+            // Store the data in the array
+            dataArray = data;
+
+            // Now you can work with the dataArray object
+            console.log(dataArray); // This will print the stored data in the console
+
+            //data into variables
+            const bulbColor = dataArray[0].bulb.toLowerCase();
+            const typePLC = dataArray[0].id;
+            const okNum = dataArray[0].countOK;
+            const badNum = dataArray[0].countNG;
+            const startDate = dataArray[0].dateLastStop;
+            const lastStopDate = dataArray[0].dateStartRun;
+            const lastNGDate = dataArray[0].dateNG_detected;
+            */
+
+            //getting class into variables
+            /*const shadow = document.querySelector('.shadow');
+            const greenBulb = document.querySelector('.greenBulb');
+            const yellowBulb = document.querySelector('.yellowBulb');
+            const redBulb = document.querySelector('.redBulb');
+
+            const dateDashboard = document.querySelector('.dashboardDate');
+            const plc = document.querySelector('.typePLC');
+
+            const goodCounter = document.querySelector('.goodNum');
+            const badCounter = document.querySelector('.NG-Num');
+
+            const started = document.querySelectorAll('.startDate')[0];
+            const lastStop = document.querySelectorAll('.startDate')[1];
+            const lastNG = document.querySelectorAll('.startDate')[2];*/
+            //Effect on class starts here ------------------------------->
+
+            /*plc.textContent = typePLC;
+
+            goodCounter.textContent = okNum;
+            badCounter.textContent = badNum;
+
+            started.textContent = startDate;
+            lastStop.textContent = lastStopDate;
+            lastNG.textContent = lastNGDate;
+            */
+            //bulb color change only one bulb for an instance
+            /*if (bulbColor === 'green'){
+
+                greenBulb.style.backgroundColor = 'green';
+            }
+            else if(bulbColor === 'yellow'){
+
+                yellowBulb.style.backgroundColor = 'rgb(240, 220, 0)';
+                shadow.style.boxShadow = 'inset 0 0 100000px rgba(255, 225, 0, 0.899)';
+                shadow.style.display = 'block';
+            }
+            else if (bulbColor === 'red'){
+
+                redBulb.style.backgroundColor = 'red'
+                shadow.style.display = 'block';
+                shadow.style.boxShadow = 'inset 0 0 100000px red';
+                shadow.style.display = 'block';
+            }   
+        })
+        .catch(error => {
+            console.error('Error fetching data:', error);
+        }); */
+    
+    </script>
+</html>
