@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>All PLC Data</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 1rem;
+            background-color: #f9f9f9;
+        }
+        h1 {
+            color: #333;
+        }
+        .plc-list {
+            list-style: none;
+            padding: 0;
+        }
+        .plc-item {
+            background-color: #fff;
+            margin-bottom: 1rem;
+            padding: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .plc-item h3 {
+            margin: 0 0 0.5rem;
+        }
+        .plc-item ul {
+            padding-left: 1rem;
+        }
+        .plc-item ul li {
+            margin-bottom: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>PLC Data</h1>
+    <ul id="plcData" class="plc-list"></ul>
+
+    <script>
+        
+        async function fetchPLCData() {
+            try {
+                const selectedPLC = localStorage.getItem("selectedPLC");
+                let PLC = "PLC3";
+                if(selectedPLC == 0){
+
+                    PLC = "PLC3"
+                }
+                else if (selectedPLC == 1){
+                    PLC = "PLC2"
+                }
+                else if (selectedPLC == 2){
+
+                    PLC = "PLC1"
+                }
+
+                console.log("localStorage is:", selectedPLC);
+                console.log("PLC if else is at:", PLC);
+
+                const response = await fetch(`/api/data/${PLC}`);
+
+                await console.log(response);
+
+                const data = await response.json();
+                const listContainer = document.getElementById('plcData');
+                listContainer.innerHTML = ''; // Clear previous entries
+
+                data.forEach((item, index) => {
+                    const listItem = document.createElement('li');
+                    listItem.className = 'plc-item';
+
+                    listItem.innerHTML = `
+                        <h3>PLC ID: ${item.id || 'Unknown'}</h3>
+                        <ul>
+                            <li><strong>Date Last Stop:</strong> ${item.dateLastStop || '-'}</li>
+                            <li><strong>Date Start Run:</strong> ${item.dateStartRun || '-'}</li>
+                            <li><strong>Date NG Detected:</strong> ${item.dateNG_detected || '-'}</li>
+                            <li><strong>Status (Green):</strong> ${item.greenStatus || '-'}</li>
+                            <li><strong>Status (Yellow):</strong> ${item.yellowStatus || '-'}</li>
+                            <li><strong>Status (Red):</strong> ${item.redStatus || '-'}</li>
+                            <li><strong>Bulb:</strong> ${item.bulb || '-'}</li>
+                            <li><strong>Count OK:</strong> ${item.countOK ?? '-'}</li>
+                            <li><strong>Count NG:</strong> ${item.countNG ?? '-'}</li>
+                        </ul>
+                    `;
+
+                    listContainer.appendChild(listItem);
+                });
+
+            } catch (err) {
+                console.error('Error fetching PLC data:', err);
+                document.getElementById('plcData').innerHTML = '<li>Error loading data</li>';
+            }
+        }
+
+        fetchPLCData();
+    </script>
+</body>
+</html>
