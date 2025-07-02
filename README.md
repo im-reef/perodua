@@ -1,5 +1,7 @@
 Overview 
 
+This is only for documentation purposes only. Feel free to check on the project at https://plc.perodua-smart-factory.xyz (only works during working hours).
+
 This project creates a real-time dashboard for monitoring a simple production system using IoT sensors connected to a Raspberry Pi. It tracks: 
 - Machine status (running or stopped)
 - Part counts (good or not good)
