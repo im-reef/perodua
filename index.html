@@ -10,7 +10,14 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <header><img src="./perodua-logo-cropped.JPG" alt=""></header>
+    <header><img src="./perodua-logo-cropped.JPG" alt="">
+    <span>
+        <span class="nav-PLC"  onclick="typePLC(2)">PLC1</span>
+        <span class="nav-PLC" onclick="typePLC(1)">PLC2</span>
+        <span class="nav-PLC" style="font-family: Poppins;" onclick="typePLC(0)">PLC3</span>
+    </span>
+    
+    </header>
         <div class="wrapper">
             <div class="top-wrapper">
                 <div class="bulb">
@@ -23,18 +30,18 @@
                 <div class="dashboardStat">
                     <div class="dashboardBox">
                         <p class="dashboardDate">23 April 2025</p>
-                        <h3 class="typePLC">PLC 3</h3>
+                        <h3 class="typePLC" style="z-index: 1001; cursor: pointer;" onclick="navigateToPLC()"></h3>
                     </div>
                 </div>
             </div>
             <div class="middle-wrapper">
                 <div class="goodPart">
                     <p class="goodTitle">good part</p>
-                    <h3 class="goodNum"></h3>
+                    <h3 style="color: darkgreen;" class="goodNum"></h3>
                 </div>
                 <div class="NGPart">
                     <p class="NG-Title">NG part</p>
-                    <h3 class="NG-Num"></h3>
+                    <h3 style="color: darkred;" class="NG-Num"></h3>
                 </div>
                 <div class="statDate">
                     <div class="statDate-wrapper">
@@ -54,30 +61,82 @@
                 </div>
             </div>
         </div>
-    <footer><p>Copyright 2025 @ DDE</p></footer>
+    <footer><p>Made with 🖤 by Ammar Arief</p></footer>
     <div class="shadow"></div> <!--create "breathing affect"-->
     
    
 </body>
 <script>
    
+   function navigateToPLC() {
+            window.location.href = "PLC3.html";
+    }
+
+    let num = 0;
+
+    function typePLC(index){
+
+        num = index;
+        fetchInitialData()
+        console.log("num:", num);
+        updateDashboard(dataArray, num)
+        localStorage.setItem("selectedPLC", num);
+    }
+
+
    let dataArray = []; // Declare an empty array
 
         // Create a WebSocket connection
-        const socket = new WebSocket('ws://localhost:5002'); // Adjust this URL if needed
+        const socket = new WebSocket('ws://192.168.0.128:5002'); // Adjust this URL if needed
+
+        let inactivityTimeout; //setTimeOut() variable for downtime
+
+        //Effect if there is inactivity
+        function triggerInactivity(){
+
+            console.log("No new data for 1 minute 🥀");
+            const greenBulb = document.querySelector('.greenBulb');
+            const yellowBulb = document.querySelector('.yellowBulb');
+            const redBulb = document.querySelector('.redBulb');
+
+            greenBulb.style.backgroundColor = 'blue';
+            yellowBulb.style.backgroundColor = 'blue';
+            redBulb.style.backgroundColor = 'blue';
+        }
+
+        //setTimeOut() with timer reset
+        function resetInactivityTimer(){
+            clearTimeout(inactivityTimeout);
+            inactivityTimeout = setTimeout(triggerInactivity, 60000); //1 minute timeout
+        }
 
         socket.onopen = () => {
             console.log('Connected to WebSocket server');
+
+            resetInactivityTimer();
+
+            // Send heartbeat every 25 seconds
+            setInterval(() => {
+            if (socket.readyState === WebSocket.OPEN) {
+                console.log("Sending heartbeat...💓");
+                socket.send(JSON.stringify({ type: "heartbeat" }));
+            }
+            }, 25000);
         };
 
         socket.onmessage = (event) => {
+
+            resetInactivityTimer();
             // This is called when data is received via WebSocket
             const data = JSON.parse(event.data);
+
+            
             console.log('Received from WebSocket:', data);
 
             // Store the data in the array and update the dashboard
             dataArray = data;
-            updateDashboard(dataArray);
+            console.log("num in websocket message is: ", num);
+            updateDashboard(dataArray, num);
         };
 
         socket.onerror = (error) => {
@@ -86,17 +145,18 @@
 
         socket.onclose = () => {
             console.log('Disconnected from WebSocket server');
+            clearTimeout(inactivityTimeout);
         };
 
         // Function to update the dashboard with data
-        function updateDashboard(dataArray) {
-            const bulbColor = dataArray[0].bulb.toLowerCase();
-            const typePLC = dataArray[0].id;
-            const okNum = dataArray[0].countOK;
-            const badNum = dataArray[0].countNG;
-            const startDate = dataArray[0].dateLastStop;
-            const lastStopDate = dataArray[0].dateStartRun;
-            const lastNGDate = dataArray[0].dateNG_detected;
+        function updateDashboard(dataArray, num = 0) {
+            const bulbColor = dataArray[num].bulb.toLowerCase();
+            const typePLC = dataArray[num].id;
+            const okNum = dataArray[num].countOK;
+            const badNum = dataArray[num].countNG;
+            const startDate = dataArray[num].dateLastStop;
+            const lastStopDate = dataArray[num].dateStartRun;
+            const lastNGDate = dataArray[num].dateNG_detected;
 
             // Getting class into variables
             const shadow = document.querySelector('.shadow');
@@ -110,8 +170,8 @@
             const goodCounter = document.querySelector('.goodNum');
             const badCounter = document.querySelector('.NG-Num');
 
-            const started = document.querySelectorAll('.startDate')[0];
-            const lastStop = document.querySelectorAll('.startDate')[1];
+            const started = document.querySelectorAll('.startDate')[1];
+            const lastStop = document.querySelectorAll('.startDate')[0];
             const lastNG = document.querySelectorAll('.startDate')[2];
 
             // Effect on class starts here ------------------------------->
@@ -152,8 +212,10 @@
                 redBulb.style.border = '1px solid grey';
                 yellowBulb.style.border = 'none';
 
-                shadow.style.boxShadow = 'inset 0 0 100000px rgba(255, 225, 0, 0.899)';
+                shadow.style.boxShadow = 'inset 0 0 1000px rgba(255, 225, 0, 0.899)';
                 shadow.style.display = 'block';
+
+
             }
             else if (bulbColor === 'red') {
                 redBulb.style.backgroundColor = 'red';
@@ -170,91 +232,29 @@
             }
         }
 
-        // Fetch initial data
-        fetch('http://[2001:d08:2291:3f2d:36af:c8e1:acca:cdec]:5002/api/data')
-            .then(response => response.json())
-            .then(data => {
-                // Store the data in the array and update the dashboard
-                dataArray = data;
-                updateDashboard(dataArray);
-            })
-            .catch(error => {
-                console.error('Error fetching data:', error);
-            });
-   
-  
-   /*legacy script*/
+    async function fetchInitialData() {
+        
+        let PLC = "PLC3";
 
-    /*
-    let dataArray = []; // Declare an empty array
+        if(num == 0){
+            PLC = "PLC3"
+        }
+        if(num == 1){
+            PLC = "PLC2"
+        }
+        if(num == 2){
+            PLC = "PLC1"
+        }
+        const response = await fetch(`/api/data/${PLC}`)
+        console.log("PLC is at: ",PLC)
 
-    fetch('http://[2001:d08:2291:3f2d:36af:c8e1:acca:cdec]:5002/api/data')
-        .then(response => response.json())
-        .then(data => {
-            // Store the data in the array
-            dataArray = data;
+        const data = await response.json();
 
-            // Now you can work with the dataArray object
-            console.log(dataArray); // This will print the stored data in the console
+        console.log(data[0])
 
-            //data into variables
-            const bulbColor = dataArray[0].bulb.toLowerCase();
-            const typePLC = dataArray[0].id;
-            const okNum = dataArray[0].countOK;
-            const badNum = dataArray[0].countNG;
-            const startDate = dataArray[0].dateLastStop;
-            const lastStopDate = dataArray[0].dateStartRun;
-            const lastNGDate = dataArray[0].dateNG_detected;
-            */
-
-            //getting class into variables
-            /*const shadow = document.querySelector('.shadow');
-            const greenBulb = document.querySelector('.greenBulb');
-            const yellowBulb = document.querySelector('.yellowBulb');
-            const redBulb = document.querySelector('.redBulb');
-
-            const dateDashboard = document.querySelector('.dashboardDate');
-            const plc = document.querySelector('.typePLC');
-
-            const goodCounter = document.querySelector('.goodNum');
-            const badCounter = document.querySelector('.NG-Num');
-
-            const started = document.querySelectorAll('.startDate')[0];
-            const lastStop = document.querySelectorAll('.startDate')[1];
-            const lastNG = document.querySelectorAll('.startDate')[2];*/
-            //Effect on class starts here ------------------------------->
-
-            /*plc.textContent = typePLC;
-
-            goodCounter.textContent = okNum;
-            badCounter.textContent = badNum;
-
-            started.textContent = startDate;
-            lastStop.textContent = lastStopDate;
-            lastNG.textContent = lastNGDate;
-            */
-            //bulb color change only one bulb for an instance
-            /*if (bulbColor === 'green'){
-
-                greenBulb.style.backgroundColor = 'green';
-            }
-            else if(bulbColor === 'yellow'){
-
-                yellowBulb.style.backgroundColor = 'rgb(240, 220, 0)';
-                shadow.style.boxShadow = 'inset 0 0 100000px rgba(255, 225, 0, 0.899)';
-                shadow.style.display = 'block';
-            }
-            else if (bulbColor === 'red'){
-
-                redBulb.style.backgroundColor = 'red'
-                shadow.style.display = 'block';
-                shadow.style.boxShadow = 'inset 0 0 100000px red';
-                shadow.style.display = 'block';
-            }   
-        })
-        .catch(error => {
-            console.error('Error fetching data:', error);
-        }); */
+        updateDashboard(data, 0);
+    }
     
+
     </script>
 </html>
